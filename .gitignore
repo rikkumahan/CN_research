@@ -1,0 +1,42 @@
+# Python Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Agent / Tool local caches
+.remember/
+.claude/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Large raw traffic captures (keep processed CSVs and metadata)
+data/raw/*.pcap
+data/raw/*.pcapng
+*.pcap
+*.pcapng
+
+# Logs and temporary files
+*.log
+*.stackdump
+tmp/
+temp/

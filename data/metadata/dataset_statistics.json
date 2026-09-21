@@ -1,0 +1,52 @@
+{
+    "ISCX_VPN_2016": {
+        "total_samples": 3000,
+        "num_classes": 5,
+        "classes": [
+            "Web_Chat",
+            "Email",
+            "File_Transfer",
+            "Streaming_Media",
+            "VPN_Tunnel"
+        ],
+        "class_distribution": {
+            "Web_Chat": 600,
+            "Email": 600,
+            "File_Transfer": 600,
+            "Streaming_Media": 600,
+            "VPN_Tunnel": 600
+        },
+        "flow_duration_stats": {
+            "min": 0.0001,
+            "median": 0.4137229919433594,
+            "mean": 30.90056020480169,
+            "max": 4116.13503909111,
+            "std": 124.69018553184998
+        }
+    },
+    "USTC_TFC_2016": {
+        "total_samples": 3000,
+        "num_classes": 5,
+        "classes": [
+            "Normal_BitTorrent",
+            "Normal_Facetime",
+            "Normal_FTP",
+            "Malware_Cridex",
+            "Malware_Geodo"
+        ],
+        "class_distribution": {
+            "Normal_BitTorrent": 600,
+            "Normal_Facetime": 600,
+            "Normal_FTP": 600,
+            "Malware_Cridex": 600,
+            "Malware_Geodo": 600
+        },
+        "flow_duration_stats": {
+            "min": 0.0001,
+            "median": 0.00014899999951012433,
+            "mean": 2.778311824333242,
+            "max": 367.703886,
+            "std": 7.817564008730698
+        }
+    }
+}

@@ -1,0 +1,9 @@
+Method,Accuracy,Overhead F,Params,Concept Drift,Multi-Objective
+DBN (Shao et al. [7]),96.00% (lit),N/A,N/A,No,No
+RNN (Wang et al. [12]),94.00% (lit),N/A,N/A,No,No
+1D-CNN (Ours Baseline),0.6150 ± 0.0226,0.3064 ± 0.0094,"2,373",No,No
+LSTM (Ours Baseline),0.6423 ± 0.0282,0.3067 ± 0.0110,"13,093",No,No
+Transformer (Ours Baseline),0.6213 ± 0.0308,0.2937 ± 0.0207,"18,437",No,No
+PSO-FFNN (Base Paper [2]),0.4793 ± 0.0288,0.4486 ± 0.0166,325,No,No
+MOPSO-FFNN-AD (Senior [B-Synth]),94.33%,0.2697,325,Yes (PH),Yes (6 Sols)
+MOPSO-FFNN-AD (Ours [C-Real]),0.3787 ± 0.0565,0.4817 ± 0.0303,325,Yes (PH),Yes (Pareto)
