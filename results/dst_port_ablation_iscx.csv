@@ -1,0 +1,3 @@
+Configuration,FFNN_Accuracy,CNN_Accuracy,Delta_FFNN,Delta_CNN
+With dst_port (8 Features),0.48333333333333334,0.625,0.0,0.0
+Without dst_port (7 Features),0.44666666666666666,0.5466666666666666,-0.03666666666666668,-0.07833333333333337

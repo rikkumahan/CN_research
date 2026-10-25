@@ -1,8 +1,8 @@
-# Paper Manuscript Updates — Review-2 Strengthening
+# Paper Manuscript Updates — Review-3 / Q2 Journal Revision
 
-> **Paper Title**: MOPSO-FFNN-AD: A Multi-Objective Neuro-Evolutionary Framework with Adaptive Drift Detection for SDWN Traffic Classification  
-> **Author**: Budithi Supraja (VIT University) | Upgraded for Review 2  
-> **Target Comparisons**: Base Paper A (Pradhan et al. 2022) vs Senior's Baseline B vs Upgraded System C
+> **Paper Title**: On the Limitations of Multi-Objective Neuro-Evolutionary Traffic Classification in SDWNs: A Negative Result and Lessons Learned  
+> **Target Venue**: Q2 Journal Submission (Merged Senior & Team Work)  
+> **Comparative Architecture**: Base Paper A (Pradhan et al. 2022) vs Senior's Baseline B (Budithi 2024) vs Upgraded Real Evaluation C (Ours)
 
 ---
 
@@ -25,16 +25,18 @@ $$\mathbf{x} = \left[ \text{IAT}_{\text{mean}}, \text{Size}_{\text{mean}}, \text
 
 ---
 
-## 2. Section VI.B: 10-Fold Stratified Cross-Validation & Statistical Significance
+## 2. Section VI.B: 10-Fold Cross-Validation & Statistical Significance (Pareto Domination Analysis)
 
 ### Manuscript Text:
-To ensure statistical rigor and prevent data leakage, 10-fold stratified cross-validation was conducted (`StratifiedKFold(n_splits=10, shuffle=True, random_state=42)`). Feature normalization (`StandardScaler`) was strictly fit only on the training folds and applied to validation/test folds. Paired two-tailed $t$-tests were performed against the single-objective baseline (PSO-FFNN).
+To ensure statistical rigor and prevent data leakage, 10-fold cross-validation was conducted. Feature normalization (`StandardScaler`) was strictly fit only on the training folds and applied to validation/test folds. Paired two-tailed $t$-tests were performed against the single-objective baseline (PSO-FFNN).
+
+Crucially, empirical evaluation demonstrates that the proposed **MOPSO-FFNN-AD is strictly Pareto-dominated** by all deep learning baselines across both accuracy AND composite overhead $F$:
 
 ### Table 2(A): 10-Fold Cross-Validation Performance & Significance (USTC-TFC 2016)
 | Method | Test Accuracy ($\text{mean} \pm \text{std}$) | Composite Overhead $F$ ($\text{mean} \pm \text{std}$) | $t$-stat (Acc) | $p$-value (Acc) | $t$-stat ($F$) | $p$-value ($F$) | Trainable Params |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | **PSO-FFNN (Base Paper [2])** | $0.7490 \pm 0.0230$ | $0.3544 \pm 0.0165$ | — | — | — | — | 325 |
-| **MOPSO-FFNN-AD (Ours Knee)** | $0.6297 \pm 0.0845$ | $0.3816 \pm 0.0298$ | $-4.071$ | $2.798 \times 10^{-3}$ | $+2.470$ | $3.559 \times 10^{-2}$ | **325** |
+| **MOPSO-FFNN-AD (Proposed)** | $0.6297 \pm 0.0845$ | $0.3816 \pm 0.0298$ | $-4.071$ | $2.798 \times 10^{-3}$ | $+2.470$ | $3.559 \times 10^{-2}$ | **325** |
 | **1D-CNN (DL Baseline)** | $0.7760 \pm 0.0341$ | $0.1997 \pm 0.0152$ | $+2.492$ | $3.431 \times 10^{-2}$ | $-21.493$ | $< 0.001$ | 2,373 |
 | **LSTM (DL Baseline)** | $0.7747 \pm 0.0348$ | $0.2008 \pm 0.0156$ | $+3.428$ | $7.533 \times 10^{-3}$ | $-35.544$ | $< 0.001$ | 13,093 |
 | **Transformer (DL Baseline)** | **$0.7857 \pm 0.0407$** | **$0.1686 \pm 0.0130$** | $+2.467$ | $3.577 \times 10^{-2}$ | $-31.320$ | $< 0.001$ | 18,437 |
@@ -43,87 +45,63 @@ To ensure statistical rigor and prevent data leakage, 10-fold stratified cross-v
 | Method | Test Accuracy ($\text{mean} \pm \text{std}$) | Composite Overhead $F$ ($\text{mean} \pm \text{std}$) | $t$-stat (Acc) | $p$-value (Acc) | $t$-stat ($F$) | $p$-value ($F$) | Trainable Params |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | **PSO-FFNN (Base Paper [2])** | $0.4793 \pm 0.0288$ | $0.4486 \pm 0.0166$ | — | — | — | — | 325 |
-| **MOPSO-FFNN-AD (Ours Knee)** | $0.3787 \pm 0.0565$ | $0.4817 \pm 0.0303$ | $-4.025$ | $2.994 \times 10^{-3}$ | $+2.480$ | $3.499 \times 10^{-2}$ | **325** |
+| **MOPSO-FFNN-AD (Proposed)** | $0.3787 \pm 0.0565$ | $0.4817 \pm 0.0303$ | $-4.025$ | $2.994 \times 10^{-3}$ | $+2.480$ | $3.499 \times 10^{-2}$ | **325** |
 | **1D-CNN (DL Baseline)** | $0.6150 \pm 0.0226$ | $0.3064 \pm 0.0094$ | $+14.572$ | $< 0.001$ | $-27.729$ | $< 0.001$ | 2,373 |
 | **LSTM (DL Baseline)** | **$0.6423 \pm 0.0282$** | $0.3067 \pm 0.0110$ | $+18.382$ | $< 0.001$ | $-34.575$ | $< 0.001$ | 13,093 |
 | **Transformer (DL Baseline)** | $0.6213 \pm 0.0308$ | **$0.2937 \pm 0.0207$** | $+8.318$ | $< 0.001$ | $-16.613$ | $< 0.001$ | 18,437 |
 
+*Scientific Takeaway*: The multi-objective formulation does not produce Pareto-optimal solutions against deep learning baselines. On ISCX VPN 2016, Transformer ($62.13\%$, $F=0.2937$) and LSTM ($64.23\%$, $F=0.3067$) achieve dramatically higher accuracy while reporting lower composite overhead $F$ than MOPSO ($37.87\%$, $F=0.4817$). This establishes empirical Pareto domination.
+
 ---
 
-## 3. Section VIII: State-of-the-Art (SOTA) Comparison
+## 3. Section VIII: State-of-the-Art (SOTA) Comprehensive Comparison
 
-### Table 6: Comprehensive SOTA Comparison
-| Method | Accuracy | Composite Overhead $F$ | Parameters | Runtime Drift Adaptation | Multi-Objective Pareto Menu |
-|---|---:|---:|---:|---|---|
-| **DBN (Shao et al. [7])** | 96.00% (lit) | N/A | N/A | No | No |
-| **RNN (Wang et al. [12])** | 94.00% (lit) | N/A | N/A | No | No |
-| **1D-CNN (Ours Baseline)** | 77.60% (USTC) / 61.50% (ISCX) | 0.1997 / 0.3064 | 2,373 | No | No |
-| **LSTM (Ours Baseline)** | 77.47% (USTC) / 64.23% (ISCX) | 0.2008 / 0.3067 | 13,093 | No | No |
-| **Transformer (Ours Baseline)** | **78.57% (USTC)** / 62.13% (ISCX) | **0.1686 / 0.2937** | 18,437 | No | No |
-| **PSO-FFNN (Base Paper [2])** | 74.90% (USTC) / 47.93% (ISCX) | 0.3544 / 0.4486 | 325 | No | No (Single point) |
-| **MOPSO-FFNN-AD (Senior [B])**| 94.33% (Synthetic) | 0.2697 | 325 | Yes (Page-Hinkley) | Yes (6 Solutions) |
-| **MOPSO-FFNN-AD (Ours [C])** | 62.97% (USTC) / 37.87% (ISCX) | 0.3816 / 0.4817 | **325** | **Yes (Page-Hinkley)** | **Yes (Pareto Front)** |
+### Table 6: Comprehensive SOTA Benchmark Comparison
+| Method | Category / Priority | Trainable Params | USTC Accuracy | ISCX Accuracy | USTC Overhead $F$ | ISCX Overhead $F$ | Concept Drift? | Multi-Objective? |
+|---|:---:|---:|---:|---:|---:|---:|:---:|:---:|
+| **ET-BERT (Lin et al. 2022)** | Published SOTA (Cite) | $\approx 50\text{M}$ | $96.95\%$ | — | N/A | N/A | No | No |
+| **YaTC (Chen et al. 2023)** | Published SOTA (Cite) | $\approx 30\text{M}$ | $97.86\%$ | — | N/A | N/A | No | No |
+| **FS-Net (Liu et al. 2019)** | Published SOTA (Cite) | $\approx 10\text{M}$ | $87.05\%$ | $52.03\%$ | N/A | N/A | No | No |
+| **FlowPic (Shapira 2021)** | Published SOTA (Cite) | $\approx 2\text{M}$ | $> 90.0\%$ | $> 85.0\%$ | N/A | N/A | No | No |
+| **TFE-GNN (Shen et al. 2023)** | Published SOTA (Cite) | $\approx 5\text{M}$ | $97.47\%$ | $91.92\%$ | N/A | N/A | No | No |
+| **Transformer (Ours Baseline)**| Generic DL Baseline | $18,437$ | $78.57\%$ | $62.13\%$ | $0.1686$ | $0.2937$ | No | No |
+| **LSTM (Ours Baseline)** | Generic DL Baseline | $13,093$ | $77.47\%$ | $64.23\%$ | $0.2008$ | $0.3067$ | No | No |
+| **1D-CNN (Ours Baseline)** | Generic DL Baseline | $2,373$ | $77.60\%$ | $61.50\%$ | $0.1997$ | $0.3064$ | No | No |
+| **PSO-FFNN (Base Paper [2])** | Single-Objective Baseline | $325$ | $74.90\%$ | $47.93\%$ | $0.3544$ | $0.4486$ | No | No |
+| **MOPSO-FFNN-AD (Senior [1])**| Synthetic Only (Budithi)| $325$ | $94.33\%$ (synth)| N/A | $0.2697$ | N/A | Yes (PH) | Yes (6 Sols) |
+| **MOPSO-FFNN-AD (Proposed)** | Proposed Framework | $325$ | $62.97\%$ | $37.87\%$ | $0.3816$ | $0.4817$ | Yes (PH) | Yes (Pareto) |
+
+*Analysis of the Performance Gap*:
+1. **Re-implementation vs. Published SOTA**: Published SOTA methods achieve $87\% - 98\%$ through large pre-trained contextual representations (ET-BERT) or 2D traffic images (FlowPic). Our re-implemented generic DL models achieve $62\% - 78\%$, demonstrating that even un-tuned deep learning easily outperforms the 325-parameter FFNN.
+2. **Failure of the Synthetic Assumption**: The senior paper's reported $94.33\%$ accuracy was an artifact of synthetic Gaussian clusters. When evaluated on real-world encrypted traffic, the method underperforms significantly.
 
 ---
 
 ## 4. Section VI.E: Policy Weight Ablation Study
 
-To evaluate flexibility under diverse SDWN operational conditions, three deployment policies were ablated:
+To evaluate how Pareto fronts shift under varying operational requirements, three deployment policies were ablated alongside default weights:
+1. **Accuracy-Critical Policy** ($\alpha = 0.80, \beta=0.08, \gamma=0.06, \delta=0.03, \epsilon=0.03$)
+2. **Bandwidth-Constrained Policy** ($\epsilon = 0.50, \alpha=0.25, \beta=0.10, \gamma=0.10, \delta=0.05$)
+3. **Latency-Sensitive Policy** ($\delta = 0.50, \alpha=0.25, \beta=0.10, \gamma=0.10, \epsilon=0.05$)
 
-1. **Accuracy-Critical Policy** ($\alpha = 0.80, \beta=0.08, \gamma=0.06, \delta=0.03, \epsilon=0.03$): Maximizes classification precision for high-priority enterprise slices.
-2. **Bandwidth-Constrained Policy** ($\epsilon = 0.50, \alpha=0.25, \beta=0.10, \gamma=0.10, \delta=0.05$): Heavily penalizes non-zero weight transfers across the southbound OpenFlow interface, yielding an ultra-sparse model ($F_{\text{BW}} < 0.15$).
-3. **Latency-Sensitive Policy** ($\delta = 0.50, \alpha=0.25, \beta=0.10, \gamma=0.10, \epsilon=0.05$): Minimizes mean absolute weight magnitude to reduce TCAM lookup depth and rule installation latency ($F_{\text{FSD}} < 0.12$).
-
-Figures generated:
-- `figures/fig_pareto_ablation_iscx.png`
-- `figures/fig_pareto_ablation_ustc.png`
+*Finding*: Although varying policy weights shifts the relative emphasis between setup delay and bandwidth, none of the generated Pareto solutions can beat deep learning baselines in accuracy or composite overhead.
 
 ---
 
-## 5. Section VI.F: Permutation Feature Importance Analysis
+## 5. Section VI.F: Revised Feature Set Analysis
 
-Using permutation feature importance across 10 trials, the empirical feature behaviors are:
-1. `ttl`: Strongest discriminator on USTC-TFC malware traffic ($\Delta F = +0.00208$), capturing topology hop distance from malware command-and-control infrastructure.
-2. `inter_arrival_time`: Strongest discriminator on ISCX encrypted traffic ($\Delta F = +0.00625$), effectively differentiating interactive chat bursts from sustained streaming media.
-3. `flow_duration`: Separates long-lived VPN/P2P sessions from ephemeral web requests.
-4. `protocol`, `packet_count`, `total_bytes`, `packet_size`: Supplementary volumetric and transport-layer indicators.
-5. `dst_port`: Minimal discriminatory value ($\Delta F \approx -0.00007$) on real encrypted traffic due to ubiquitous port 443 (HTTPS/TLS) multiplexing.
-
-Figures generated:
-- `figures/fig_feature_importance_iscx.png`
-- `figures/fig_feature_importance_ustc.png`
+Permutation feature importance across 10 trials revealed:
+1. **`dst_port` is Ineffective**: Ranked dead last ($\Delta F \approx -0.00007$) because modern applications tunnel over port 443 (HTTPS/TLS). It should be omitted from primary feature extraction.
+2. **`ttl` is Topology-Dependent**: While ranking high on USTC ($\Delta F = +0.00208$), TTL reflects specific testbed hops and is easily spoofed or altered by intermediate middleboxes.
+3. **Need for Higher-Order IAT Moments**: Standard mean IAT misses packet timing variance. FlowPic and FS-Net succeed by utilizing variance, skewness, and kurtosis of inter-arrival times.
 
 ---
 
-## 6. Section VII: Mathematical Stability Analysis & SDWN Controller Implications
+## 6. Appendix A: Mathematical Stability Analysis vs. Classifier Efficacy
 
-### Lemma 1 (First-Order Expectation Convergence)
-**Statement**: For a particle position $q_s \in \mathbb{R}^D$ governed by velocity recurrence with dynamic inertia decay $w(t)$ and acceleration coefficients $c_1, c_2$:
-$$\mathbb{E}[q_s] = \frac{1}{2^s}(q_0 - p) + p \longrightarrow p \quad \text{as } s \to \infty$$
-where $p$ is the non-dominated archive attractor vector.  
-**Proof**: Since $|1/2^s| \to 0$ exponentially as $s \to \infty$, the expected particle position is asymptotically unbiased and unconditionally converges to the Pareto attractor.
+### Main Text Clarification:
+> *"We formally prove that the MOPSO optimizer is mathematically stable with a bounded spectral radius $\rho < 1.0$ (Lemma 1) and vanishing position variance (Lemma 2, Appendix A). However, stability is an intrinsic property of the particle swarm dynamics, not of classification performance. Mathematical convergence to a Pareto-optimal point does not guarantee competitive accuracy against deep learning baselines when the underlying architecture lacks sufficient capacity."*
 
-### Lemma 2 (Second-Order Variance Convergence)
-**Statement**: The particle position variance satisfies:
-$$\text{Var}[q_s] = \frac{1}{4^s} \text{Var}[q_0] + \mathbb{E}[(q_0 - p)^2] \left( \frac{1}{3^s} - \frac{1}{4^s} \right) \longrightarrow 0 \quad \text{as } s \to \infty$$
-**Proof**: As $s \to \infty$, $1/4^s \to 0$ and $(1/3^s - 1/4^s) \to 0$. Thus, particle variance vanishes, proving swarm explosion is mathematically impossible.
-
-### Physical Significance for SDWN Controllers:
-In an SDWN architecture, a diverging or unstable neuro-evolutionary classifier causes rapid oscillations in weight vectors during re-optimization. This triggers:
-1. **Flow Table Thrashing**: Switches receive bursts of conflicting `FLOW_MOD` commands.
-2. **Control-Plane CPU Spikes**: Instability forces excessive matrix multiplications in controller threads.
-3. **Southbound API Congestion**: Repeated large rule updates exhaust OpenFlow bandwidth.
-Lemmas 1 and 2 guarantee that warm-restart re-optimization settles smoothly and predictably within bounded iterations.
-
----
-
-## 7. Section IX: Discussion
-
-### (i) Engineered Flow Features vs. Raw Packet Byte Models
-While raw-byte deep learning models (e.g., 1D-CNN over raw 784-byte packet headers) eliminate manual feature engineering, they incur heavy computational penalties ($> 10^4$ multiply-accumulate operations per packet) and require high-end GPU acceleration on controllers. In contrast, 8-tuple statistical flow features can be calculated using lightweight OpenFlow counters directly on commodity Open vSwitch (OVS) datapath switches, making FFNN classification feasible with $< 0.1\text{ ms}$ inference latency.
-
-### (ii) MOPSO Meta-Heuristic Training Time vs. SGD Backpropagation
-Gradient-based optimization (SGD/Adam) is computationally fast per epoch but prone to getting trapped in sharp local minima for multi-objective trade-offs. MOPSO explores the Pareto landscape holistically, discovering non-dominated trade-offs in a single run. Furthermore, for runtime drift adaptation, our **warm-restart MOPSO** seeds particles from the deployed knee, converging in only 120 iterations ($< 2.5\text{ seconds}$), eliminating the need for full retraining.
-
-### (iii) Generalization to Encrypted QUIC & TLS 1.3 Traffic
-With TLS 1.3 and QUIC (HTTP/3) encrypting packet payloads and connection metadata, legacy DPI techniques fail entirely. However, our 8-feature representation relies strictly on transport and IP flow dynamics (IAT, packet size distribution, flow duration, byte volume), which remain visible even under end-to-end encryption. While randomized padding (e.g., PADDING frames in QUIC) can introduce noise, the Page-Hinkley drift detector actively tracks resultant accuracy dips and triggers adaptive re-tuning.
+### Summary of Moved Lemmas (Now in Appendix A):
+- **Lemma 1 (First-Order Expectation Convergence)**: Swarm expected position asymptotically converges to the non-dominated attractor vector $p$: $\mathbb{E}[q_s] \to p$ as $s \to \infty$.
+- **Lemma 2 (Second-Order Variance Convergence)**: Particle position variance strictly vanishes: $\text{Var}[q_s] \to 0$ as $s \to \infty$.

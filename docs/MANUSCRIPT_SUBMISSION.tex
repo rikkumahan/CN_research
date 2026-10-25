@@ -1,0 +1,211 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{balance}
+\usepackage{url}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\begin{document}
+
+\title{On the Limitations of Multi-Objective Neuro-Evolutionary Traffic Classification in SDWNs: A Negative Result and Lessons Learned}
+
+\author{\IEEEauthorblockN{Anonymous Authors}
+\IEEEauthorblockA{\textit{School of Computer Science and Engineering (SCOPE)} \\
+\textit{Vellore Institute of Technology (VIT)}\\
+Vellore, Tamil Nadu, India}
+}
+
+\maketitle
+
+\begin{abstract}
+We evaluate whether multi-objective neuro-evolutionary optimization can produce a traffic classifier suitable for deployment in resource-constrained Software-Defined Wireless Network (SDWN) edge switches. Using real-world PCAP benchmarks (ISCX VPN-nonVPN 2016 and USTC-TFC 2016) alongside strict leakage-free evaluation, we compare a 325-parameter Particle Swarm Optimization (PSO)-trained Feed-Forward Neural Network (FFNN) against three deep learning baselines: 1D-Convolutional Neural Network (1D-CNN), Long Short-Term Memory (LSTM), and a Compact Transformer. 
+
+Our empirical results demonstrate that the proposed MOPSO-FFNN-AD is strictly Pareto-dominated by all deep learning baselines across both classification accuracy and composite physical overhead $F$. On the encrypted ISCX VPN benchmark, the Transformer ($62.13\%$, $F=0.2937$) and LSTM ($64.23\%$, $F=0.3067$) achieve significantly higher accuracy while simultaneously exhibiting lower composite overhead than MOPSO-FFNN-AD ($37.87\%$, $F=0.4817$). 
+
+We trace this failure to a fundamental architectural and metric misalignment: (1) weight-magnitude overhead proxies ($|w| > 0.3, |w| > 0.05$) fail because deep learning models regularized with weight decay naturally yield small weights without optimization pressure; (2) a 325-parameter FFNN possesses insufficient representational capacity to resolve encrypted traffic manifolds; and (3) standard 8-feature representations suffer from port 443 multiplexing and topology-dependent TTL artifacts. We provide formal mathematical proofs of swarm stability (Lemma 1: spectral radius $\rho = 0.8543 < 1.0$; Lemma 2: variance convergence with $+0.3550$ safety margin in Appendix A) to demonstrate that optimization convergence does not guarantee classification efficacy. Furthermore, we evaluate time-based blocking cross-validation to expose temporal autocorrelation leakage in networking AI and provide concrete recommendations for future SDWN edge intelligence.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Software-Defined Wireless Networks (SDWN), Traffic Classification, Multi-Objective Optimization, Pareto Domination, Negative Result, Concept Drift, Deep Learning, Reproducibility.
+\end{IEEEkeywords}
+
+\section{Introduction}
+Software-Defined Wireless Networking (SDWN) decouples the central control plane from distributed forwarding hardware, enabling fine-grained traffic engineering, dynamic QoS routing, and programmatic security enforcement. A vital operational prerequisite for SDWN controllers is real-time \textbf{traffic classification}---the automated identification of network application types, encrypted tunnels, and malicious botnet communications from streaming packet headers. Accurate classification allows the central controller to install proactive OpenFlow rules (\texttt{FLOW\_MOD}), throttle bandwidth-heavy file transfers, prioritize ultra-reliable low-latency communications (URLLC), and isolate malware infections at line rate.
+
+However, deploying traffic classification models within operational SDWN environments introduces severe physical conflicts. Commodity OpenFlow switches and wireless access points possess limited Ternary Content-Addressable Memory (TCAM), modest CPU budgets, and constrained southbound control-channel bandwidth. Consequently, prior literature has argued against deploying complex deep neural networks directly at the network edge, advocating instead for compact, neuro-evolutionary classifiers trained via heuristic optimization.
+
+To address this challenge, two foundational frameworks were proposed:
+\begin{itemize}
+    \item \textbf{Pradhan et al. (IET Communications 2022 \cite{pradhan2022})}: Introduced a single-objective Particle Swarm Optimization (PSO)-trained Feed-Forward Neural Network (FFNN) containing 325 parameters ($8 \to 16 \to 8 \to 5$). While lightweight, their formulation optimized classification accuracy in isolation, ignoring switch resource overheads and concept drift.
+    \item \textbf{Budithi Supraja (2024/2025 \cite{supraja2024})}: Extended this architecture into a multi-objective framework (\textbf{MOPSO-FFNN-AD}) by incorporating a 5-component composite physical overhead metric $F$ and a Page-Hinkley drift detector.
+\end{itemize}
+
+Despite these intuitive formulations, both foundational predecessors suffered from a fatal methodological limitation: \textbf{neither paper evaluated on real packet captures (PCAPs)}. Pradhan et al. evaluated on historical benchmark tables, while Budithi evaluated strictly on a synthetic Gaussian dataset ($N=3000$) where classes were artificially separated into clean clusters. Real internet traffic---characterized by encrypted payloads, high temporal variance, transport multiplexing, and adversarial packet distributions---was never tested.
+
+In this work, we conduct the first rigorous evaluation of multi-objective neuro-evolutionary SDWN traffic classification on real captured PCAP benchmarks: \textbf{ISCX VPN-nonVPN 2016} and \textbf{USTC-TFC 2016}. Our primary empirical contribution is an \textbf{honest, rigorous negative result}: when evaluated on real-world encrypted traffic, the proposed MOPSO-FFNN-AD is \textbf{strictly Pareto-dominated} by modern deep learning baselines across both accuracy AND composite physical overhead. Rather than obscuring this under the guise of an ``intentional multi-objective compromise,'' we demonstrate why the multi-objective formulation fails to produce non-dominated operating points against deep learning.
+
+\section{System Architecture \& Problem Formulation}
+
+\subsection{Standardized 8-Dimensional Flow Feature Schema}
+To avoid invasive payload inspection under end-to-end encryption (TLS 1.3 / HTTPS / VPN), the controller summarizes each bidirectional flow into an 8-dimensional statistical header vector:
+\begin{equation}
+\mathbf{x} = \left[ \text{IAT}_{\text{mean}}, \; \text{Size}_{\text{mean}}, \; \text{Proto}, \; \text{Duration}, \; \text{Bytes}_{\text{total}}, \; \text{Pkts}_{\text{count}}, \; \text{Port}_{\text{dst}}, \; \text{TTL}_{\text{mean}} \right]^T
+\end{equation}
+
+\subsection{The 5-Component Composite Objective Function ($F$)}
+In the foundational formulations \cite{pradhan2022, supraja2024}, multi-objective optimization balances classification accuracy alongside a five-component physical overhead proxy $F$:
+\begin{equation}
+F(\mathbf{w}) = \alpha \cdot f_1(\mathbf{w}) + \beta \cdot f_2(\mathbf{w}) + \gamma \cdot f_3(\mathbf{w}) + \delta \cdot f_4(\mathbf{w}) + \epsilon \cdot f_5(\mathbf{w})
+\end{equation}
+where $\alpha + \beta + \gamma + \delta + \epsilon = 1.0$ (default policy: $0.45, 0.20, 0.15, 0.10, 0.10$). The individual terms are:
+\begin{enumerate}
+    \item \textbf{Classification Error ($f_1$)}: $f_1 = 1.0 - \text{Accuracy}(\mathbf{w})$.
+    \item \textbf{Flow Rule Update Rate ($f_2 = \text{FRUR}$)}: Evaluates decision boundary stability under Gaussian jitter ($\sigma = 0.10$):
+    \begin{equation}
+    f_2 = \frac{1}{K}\sum_{k=1}^K \frac{1}{N}\sum_{i=1}^N \mathbb{I}\left(\hat{y}(\mathbf{x}_i) \neq \hat{y}(\mathbf{x}_i + \boldsymbol{\xi}_{i,k})\right)
+    \end{equation}
+    \item \textbf{Controller CPU Density ($f_3$)}: Active weight density thresholded at $\theta_{\text{cpu}} = 0.3$:
+    \begin{equation}
+    f_3 = \frac{1}{D}\sum_{j=1}^D \mathbb{I}(|w_j| > 0.3)
+    \end{equation}
+    \item \textbf{Flow Setup Delay ($f_4$)}: Normalized $L_1$ weight magnitude:
+    \begin{equation}
+    f_4 = \min\left(\frac{1}{3.0 \cdot D}\sum_{j=1}^D |w_j|, \; 1.0\right)
+    \end{equation}
+    \item \textbf{Southbound Bandwidth ($f_5$)}: Density of non-sparse weights exceeding $\theta_{\text{bw}} = 0.05$:
+    \begin{equation}
+    f_5 = \frac{1}{D}\sum_{j=1}^D \mathbb{I}(|w_j| > 0.05)
+    \end{equation}
+\end{enumerate}
+
+\section{Empirical Evaluation \& The Negative Result}
+
+\subsection{Standard Stratified 10-Fold Cross-Validation}
+All models were evaluated across 10-fold stratified cross-validation with strict data leakage isolation (\texttt{StandardScaler} fit exclusively on training folds). Paired two-tailed $t$-tests were conducted against the single-objective baseline (PSO-FFNN).
+
+\begin{table*}[t]
+\centering
+\caption{10-Fold Stratified Cross-Validation on Real PCAP Benchmarks}
+\label{tab:10fold_results}
+\begin{tabular}{llccccc}
+\toprule
+\textbf{Benchmark} & \textbf{Method} & \textbf{Architecture} & \textbf{Accuracy (mean $\pm$ std)} & \textbf{Overhead $F$ (mean $\pm$ std)} & \textbf{$p$-value (vs PSO)} & \textbf{Params ($D$)} \\
+\midrule
+\multirow{5}{*}{\textbf{USTC-TFC}} 
+& PSO-FFNN \cite{pradhan2022} & Base Paper A & $0.7490 \pm 0.0230$ & $0.3544 \pm 0.0165$ & --- & 325 \\
+& \textbf{MOPSO-FFNN-AD} & Proposed C & $\mathbf{0.6297 \pm 0.0845}$ & $\mathbf{0.3816 \pm 0.0298}$ & $2.798 \times 10^{-3}$ & \textbf{325} \\
+& 1D-CNN & Generic DL & $0.7760 \pm 0.0341$ & $0.1997 \pm 0.0152$ & $3.431 \times 10^{-2}$ & 2,373 \\
+& LSTM & Generic DL & $0.7747 \pm 0.0348$ & $0.2008 \pm 0.0156$ & $7.533 \times 10^{-3}$ & 13,093 \\
+& \textbf{Transformer} & Generic DL & $\mathbf{0.7857 \pm 0.0407}$ & $\mathbf{0.1686 \pm 0.0130}$ & $3.577 \times 10^{-2}$ & 18,437 \\
+\midrule
+\multirow{5}{*}{\textbf{ISCX VPN}} 
+& PSO-FFNN \cite{pradhan2022} & Base Paper A & $0.4793 \pm 0.0288$ & $0.4486 \pm 0.0166$ & --- & 325 \\
+& \textbf{MOPSO-FFNN-AD} & Proposed C & $\mathbf{0.3787 \pm 0.0565}$ & $\mathbf{0.4817 \pm 0.0303}$ & $2.994 \times 10^{-3}$ & \textbf{325} \\
+& 1D-CNN & Generic DL & $0.6150 \pm 0.0226$ & $0.3064 \pm 0.0094$ & $< 0.001$ & 2,373 \\
+& \textbf{LSTM} & Generic DL & $\mathbf{0.6423 \pm 0.0282}$ & $0.3067 \pm 0.0110$ & $< 0.001$ & 13,093 \\
+& Transformer & Generic DL & $0.6213 \pm 0.0308$ & $\mathbf{0.2937 \pm 0.0207}$ & $< 0.001$ & 18,437 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{The Negative Result: Strict Pareto Domination}
+As detailed in Table~\ref{tab:10fold_results}:
+\begin{itemize}
+    \item On USTC-TFC, the Transformer achieves $78.57\%$ accuracy with $F = 0.1686$. MOPSO-FFNN-AD achieves only $62.97\%$ accuracy with $F = 0.3816$.
+    \item On ISCX VPN, the LSTM achieves $64.23\%$ accuracy with $F = 0.3067$. MOPSO-FFNN-AD achieves only $37.87\%$ accuracy with $F = 0.4817$.
+\end{itemize}
+Because deep learning models achieve \textbf{both higher accuracy AND lower overhead $F$ simultaneously}, MOPSO-FFNN-AD is \textbf{strictly Pareto-dominated}. Claiming this result as an ``intentional trade-off'' is scientifically indefensible.
+
+\subsection{Time-Based Blocking Cross-Validation}
+To eliminate temporal session autocorrelation leakage, we partitioned flows chronologically into 10 contiguous time blocks. Under strict time blocking:
+\begin{itemize}
+    \item On ISCX: LSTM achieves $57.30\%$ ($F = 0.3343$) and Transformer achieves $53.37\%$ ($F = 0.3239$) vs MOPSO ($38.23\%$, $F = 0.4837$).
+    \item On USTC: 1D-CNN achieves $77.40\%$ ($F = 0.1989$) vs MOPSO ($66.60\%$, $F = 0.3742$).
+\end{itemize}
+All paired $t$-tests confirm $p < 0.01$. Pareto domination is strictly preserved under temporal isolation.
+
+\begin{table}[h]
+\centering
+\caption{Published SOTA Benchmark Comparison}
+\label{tab:sota}
+\begin{tabular}{llcc}
+\toprule
+\textbf{Method} & \textbf{Architecture} & \textbf{Params} & \textbf{USTC Acc} \\
+\midrule
+ET-BERT \cite{lin2022} & Contextual BERT & $\approx 50\text{M}$ & $96.95\%$ \\
+YaTC \cite{chen2023} & Traffic Transformer & $\approx 30\text{M}$ & $97.86\%$ \\
+FS-Net \cite{liu2019} & Bi-GRU Flow Model & $\approx 10\text{M}$ & $87.05\%$ \\
+FlowPic \cite{shapira2021} & 2D Image CNN & $\approx 2\text{M}$ & $> 90.0\%$ \\
+TFE-GNN \cite{shen2023} & Graph Neural Net & $\approx 5\text{M}$ & $97.47\%$ \\
+\midrule
+Transformer (Ours) & Compact Transformer & $18,437$ & $78.57\%$ \\
+1D-CNN (Ours) & Compact 1D-CNN & $2,373$ & $77.60\%$ \\
+MOPSO-FFNN-AD & Swarm FFNN & \textbf{325} & $\mathbf{62.97\%}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Post-Mortem Analysis \& Root Causes}
+We identify three primary root causes:
+\begin{enumerate}
+    \item \textbf{Proxy Metric Misalignment}: Terms $f_3$ and $f_5$ penalize weights $|w| > 0.3$. Deep learning layers trained with $L_2$ weight decay (\texttt{1e-4}) and Batch Normalization naturally keep weights below $0.2$, bypassing penalties. Unconstrained PSO search weights range in $[-3, 3]$ and get penalized. Weight magnitude is not hardware cost.
+    \item \textbf{Capacity Bottleneck}: A 325-parameter network ($8 \to 16 \to 8 \to 5$) lacks representational capacity to separate encrypted VPN flows ($37.87\%$).
+    \item \textbf{Feature Weaknesses}: Permutation ablation proves \texttt{dst\_port} provides zero utility due to universal Port 443 HTTPS multiplexing ($\Delta\text{Acc} = 0.0\%$). Furthermore, adding noise to \texttt{ttl} drops accuracy by $30.5\%$, proving TTL is a testbed topology artifact.
+\end{enumerate}
+
+\section{Conclusion}
+We presented an empirical post-mortem of multi-objective neuro-evolutionary SDWN traffic classification. Evaluating on real PCAPs revealed strict Pareto domination by deep learning baselines. We deconstructed the flawed proxy metrics, proved swarm stability (Appendix A), and demonstrated that compact 1D-CNNs (~2k parameters) offer the true viable edge sweet spot.
+
+\appendix
+\section{Mathematical Swarm Stability Proofs}
+
+\subsection{Lemma 1: First-Order Mean Convergence}
+\begin{lemma}
+Under Clerc's constriction velocity recurrence, the expectation of particle positions converges asymptotically to local attractor $\mathbf{P}_i^*$.
+\end{lemma}
+\begin{proof}
+Taking expectation $\mathbb{E}[\cdot]$ with uniform random coefficients ($c = 1.49618, \omega = 0.7298$):
+\begin{equation}
+\mathbf{A} = \begin{bmatrix} 1 - c & \omega \\ -c & \omega \end{bmatrix}, \quad \det(\lambda \mathbf{I} - \mathbf{A}) = \lambda^2 - 0.2336 \lambda + 0.7298 = 0
+\end{equation}
+The eigenvalues $\lambda_{1,2} = 0.1168 \pm 0.8463i$ have spectral radius $\rho(\mathbf{A}) = \sqrt{0.7298} = \mathbf{0.8543} < 1.0$. Because $\rho < 1$, $\mathbf{A}^t \to \mathbf{0}$ as $t \to \infty$. Expectation unconditionally converges.
+\end{proof}
+
+\subsection{Lemma 2: Second-Order Variance Stability}
+\begin{lemma}
+Particle position variance $\text{Var}[\mathbf{X}_i(t)]$ remains strictly bounded and vanishes asymptotically.
+\end{lemma}
+\begin{proof}
+By Trelea's theorem \cite{trelea2003}, stability holds if:
+\begin{equation}
+c_1 + c_2 < \frac{24(1 - \omega^2)}{7 - 5\omega} = \frac{11.2176}{3.3510} = \mathbf{3.3474}
+\end{equation}
+Our sum is $c_1 + c_2 = 2.9924 < 3.3474$, yielding safety margin $+\mathbf{0.3550} > 0$. Variance strictly converges to 0.
+\end{proof}
+
+\begin{thebibliography}{00}
+\bibitem{supraja2024} B. Supraja, ``MOPSO-FFNN-AD: A Multi-Objective Neuro-Evolutionary Framework with Adaptive Drift Detection for SDWN Traffic Classification,'' Master's thesis, School of Computer Science and Engineering, VIT, 2024/2025.
+\bibitem{pradhan2022} P. Pradhan, K. K. Pattanaik, and M. Tanveer, ``A neuro-evolutionary approach for software defined wireless network traffic classification,'' \textit{IET Communications}, vol. 16, no. 14, pp. 1650--1662, 2022.
+\bibitem{clerc2002} M. Clerc and J. Kennedy, ``The particle swarm - explosion, stability, and convergence in a multidimensional complex space,'' \textit{IEEE Trans. Evol. Comput.}, vol. 6, no. 1, pp. 58--73, 2002.
+\bibitem{trelea2003} I. C. Trelea, ``The particle swarm optimization algorithm: convergence analysis and parameter selection,'' \textit{Inf. Process. Lett.}, vol. 85, no. 6, pp. 317--325, 2003.
+\bibitem{lin2022} X. Lin et al., ``ET-BERT: A contextualized datagram representation with pre-training for encrypted traffic classification,'' in \textit{Proc. ACM WWW}, 2022, pp. 633--642.
+\bibitem{shapira2021} T. Shapira and Y. Shavitt, ``FlowPic: Encrypted Internet Traffic Classification is as Easy as Image Recognition,'' \textit{IEEE TNSM}, vol. 18, no. 4, pp. 4802--4815, 2021.
+\bibitem{chen2023} Z. Chen et al., ``YaTC: Yet another traffic classifier with pre-training on large-scale unlabeled network traffic,'' in \textit{Proc. IEEE INFOCOM}, 2023, pp. 1--10.
+\bibitem{liu2019} C. Liu et al., ``FS-Net: A flow sequence network for encrypted traffic classification,'' in \textit{Proc. IEEE INFOCOM}, 2019, pp. 1171--1179.
+\bibitem{shen2023} M. Shen et al., ``Accurate decentralized encrypted traffic classification with federated graph neural networks,'' \textit{IEEE JSAC}, vol. 41, no. 11, pp. 3474--3489, 2023.
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,9 @@
+Num_Features,Features_Included,Test_Accuracy,Parameters
+1,inter_arrival_time,0.35333333333333333,213
+2,"inter_arrival_time, flow_duration",0.3416666666666667,229
+3,"inter_arrival_time, flow_duration, ttl",0.3416666666666667,245
+4,"inter_arrival_time, flow_duration, ttl, protocol",0.405,261
+5,"inter_arrival_time, flow_duration, ttl, protocol, packet_count",0.41,277
+6,"inter_arrival_time, flow_duration, ttl, protocol, packet_count, total_bytes",0.38,293
+7,"inter_arrival_time, flow_duration, ttl, protocol, packet_count, total_bytes, packet_size",0.4,309
+8,"inter_arrival_time, flow_duration, ttl, protocol, packet_count, total_bytes, packet_size, dst_port",0.4266666666666667,325

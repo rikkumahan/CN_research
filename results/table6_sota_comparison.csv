@@ -1,9 +1,12 @@
-Method,Accuracy,Overhead F,Params,Concept Drift,Multi-Objective
-DBN (Shao et al. [7]),96.00% (lit),N/A,N/A,No,No
-RNN (Wang et al. [12]),94.00% (lit),N/A,N/A,No,No
-1D-CNN (Ours Baseline),0.6150 ± 0.0226,0.3064 ± 0.0094,"2,373",No,No
-LSTM (Ours Baseline),0.6423 ± 0.0282,0.3067 ± 0.0110,"13,093",No,No
-Transformer (Ours Baseline),0.6213 ± 0.0308,0.2937 ± 0.0207,"18,437",No,No
-PSO-FFNN (Base Paper [2]),0.4793 ± 0.0288,0.4486 ± 0.0166,325,No,No
-MOPSO-FFNN-AD (Senior [B-Synth]),94.33%,0.2697,325,Yes (PH),Yes (6 Sols)
-MOPSO-FFNN-AD (Ours [C-Real]),0.3787 ± 0.0565,0.4817 ± 0.0303,325,Yes (PH),Yes (Pareto)
+Method,Category,Parameters,USTC Accuracy,ISCX Accuracy,USTC Overhead F,ISCX Overhead F,Concept Drift,Multi-Objective Pareto,Key Bottleneck / Status
+ET-BERT (Lin et al. 2022),Published SOTA,~50M,96.95%,-,N/A,N/A,No,No,Pretrained Transformer; requires high-end server GPU
+YaTC (Chen et al. 2023),Published SOTA,~30M,97.86%,-,N/A,N/A,No,No,Large Transformer; cannot execute in switch TCAM/SRAM
+FS-Net (Liu et al. 2019),Published SOTA,~10M,87.05%,52.03%,N/A,N/A,No,No,Bi-RNN payload sequence; high inference latency
+FlowPic (Shapira et al. 2021),Published SOTA,~2M,>90.00%,>85.00%,N/A,N/A,No,No,2D-CNN visual flow representation; buffer heavy
+TFE-GNN (Shen et al. 2023),Published SOTA,~5M,97.47%,91.92%,N/A,N/A,No,No,Graph Neural Network; graph construction overhead
+Transformer (Ours Baseline),Re-implemented Generic DL,"18,437",78.57% ± 4.07%,62.13% ± 3.08%,0.1686 ± 0.0130,0.2937 ± 0.0207,No,No,Pareto-dominates proposed MOPSO on both axes
+LSTM (Ours Baseline),Re-implemented Generic DL,"13,093",77.47% ± 3.48%,64.23% ± 2.82%,0.2008 ± 0.0156,0.3067 ± 0.0110,No,No,Pareto-dominates proposed MOPSO on both axes
+1D-CNN (Ours Baseline),Re-implemented Generic DL,"2,373",77.60% ± 3.41%,61.50% ± 2.26%,0.1997 ± 0.0152,0.3064 ± 0.0094,No,No,Pareto-dominates proposed MOPSO on both axes
+PSO-FFNN (Base Paper [2]),Single-Objective Benchmark,325,74.90% ± 2.30%,47.93% ± 2.88%,0.3544 ± 0.0165,0.4486 ± 0.0166,No,No,Pradhan et al. (IET 2022); optimizes accuracy only
+MOPSO-FFNN-AD (Senior [1]),Synthetic Evaluation,325,94.33% (synthetic),N/A,0.2697,N/A,Yes (PH),Yes (6 Sols),Evaluated strictly on synthetic Gaussian clusters
+MOPSO-FFNN-AD (Ours Proposed),Proposed Neuro-Evolutionary,325,62.97% ± 8.45%,37.87% ± 5.65%,0.3816 ± 0.0298,0.4817 ± 0.0303,Yes (PH),Yes (Pareto),Pareto-dominated on real PCAPs; negative result analyzed

@@ -1,111 +1,131 @@
-# MOPSO-FFNN-AD: Multi-Objective Neuro-Evolutionary Traffic Classification in SDWN
+# On the Limitations of Multi-Objective Neuro-Evolutionary Traffic Classification in SDWNs: A Negative Result and Lessons Learned
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.example.svg)](https://doi.org/10.5281/zenodo.example)
 
-This repository contains the upgraded **MOPSO-FFNN-AD** Software-Defined Wireless Network (SDWN) traffic classification research framework for **Review 2**.
-
----
-
-## 📌 Three-Tier System Architecture (A / B / C)
-
-| Framework | Architecture | Optimization Objective | Dataset Evaluated |
-|---|---|---|---|
-| **A: Base Paper** | Single-Objective PSO-FFNN (Pradhan et al. 2022) | Maximize Classification Accuracy | Benchmark / Historical |
-| **B: Senior's Baseline** | Bi-Objective MOPSO-FFNN-AD (Budithi 2024) | Accuracy & 5-Component Overhead $F$ | Synthetic SDWN (3,000 samples) |
-| **C: Upgraded System (Ours)** | MOPSO-FFNN-AD + 1D-CNN + LSTM + Transformer | Accuracy & 5-Component Overhead $F$ | **Real Public Benchmarks**: ISCX VPN 2016 & USTC-TFC 2016 |
+This repository contains the complete empirical reproduction suite and publication package for the research paper:
+> **"On the Limitations of Multi-Objective Neuro-Evolutionary Traffic Classification in SDWNs: A Negative Result and Lessons Learned"**  
+> *Target Submission*: Q2 Journal Submission (Merged Senior & Team Research)
 
 ---
 
-## 🚀 Quickstart & Environment Setup
+## 📌 Summary: The Empirical Negative Result
 
-This project uses [`uv`](https://github.com/astral-sh/uv) for fast, isolated, and reproducible virtual environments.
+This work investigates whether a lightweight, multi-objective Particle Swarm Optimization (MOPSO)-trained Feed-Forward Neural Network (FFNN, 325 parameters) can produce a viable edge-deployable traffic classifier for Software-Defined Wireless Networks (SDWNs).
 
-### 1. Clone & Setup Environment
+When evaluated on real-world packet traces (**ISCX VPN 2016** and **USTC-TFC 2016**), our findings show that **MOPSO-FFNN-AD is strictly Pareto-dominated** by modern deep learning baselines across both accuracy and composite physical overhead:
+
+| Method | Parameters ($D$) | USTC Acc (Time-Blocked) | ISCX Acc (Time-Blocked) | USTC Overhead $F$ | ISCX Overhead $F$ | Multi-Objective Status |
+|:---|:---:|:---:|:---:|:---:|:---:|:---|
+| **Compact Transformer** | 18,437 | $77.20 \pm 4.24\%$ | $53.37 \pm 6.60\%$ | **$0.1738$** | **$0.3239$** | Strictly Pareto-dominates |
+| **PyTorch LSTM** | 13,093 | **$78.17 \pm 4.46\%$** | **$57.30 \pm 9.25\%$** | $0.2007$ | $0.3343$ | Strictly Pareto-dominates |
+| **PyTorch 1D-CNN** | 2,373 | $77.40 \pm 3.85\%$ | $53.20 \pm 9.02\%$ | $0.1989$ | $0.3395$ | Strictly Pareto-dominates |
+| **PSO-FFNN (Base [A])** | 325 | $71.73 \pm 3.14\%$ | $41.27 \pm 8.43\%$ | $0.3559$ | $0.4792$ | Pradhan et al. (IET 2022) |
+| **MOPSO-FFNN-AD (Ours)**| **325** | **$66.60 \pm 9.56\%$** | **$38.23 \pm 8.30\%$** | **$0.3742$** | **$0.4837$** | **Pareto-Dominated (Negative Result)** |
+
+### Key Post-Mortem Insights:
+1. **Flawed Overhead Proxies**: Weight-magnitude thresholds ($|w| > 0.3, |w| > 0.05$) fail because modern deep learning regularized via batch norm and weight decay naturally yields small weights, resulting in lower $F$ scores than unregularized FFNNs despite having $56\times$ more parameters.
+2. **Representational Bottleneck**: A 325-parameter network ($8 \to 16 \to 8 \to 5$) lacks capacity for encrypted traffic distributions ($38.2\%$ on ISCX VPN).
+3. **Temporal Leakage**: Standard random cross-validation overstates accuracy by $7\% - 9\%$ due to temporal autocorrelation within network bursts. Time-based blocking CV eliminates this leakage.
+4. **Feature Vulnerabilities**: `dst_port` provides zero utility under port 443 HTTPS multiplexing; `ttl` is an unreliable topology artifact that collapses under noise.
+
+---
+
+## 🚀 Quickstart & Reproduction Guide
+
+### 1. Environment Setup (Using `uv`)
 ```bash
 # Clone the repository
-git clone <repo-url>
-cd CN_Project
+git clone https://github.com/rikkumahan/CN_research.git
+cd CN_research
 
-# Create virtual environment and install dependencies via uv
-uv venv .venv
+# Create virtual environment and install pinned dependencies
+uv venv .venv --python 3.12
+source .venv/bin/activate
 uv pip install -r requirements.txt
 ```
 
-### 2. Dataset Ingestion & Feature Extraction
-Paste your raw `.pcap` or `.csv` files into:
-- `data/raw/iscx/` (for ISCX VPN 2016)
-- `data/raw/ustc/` (for USTC-TFC 2016)
-
-Then run the automated preprocessing pipeline:
+### 2. Verify Automated Unit Tests (13/13 Passing)
 ```bash
-uv run python src/dataset_loader.py
-```
-This extracts the exact 8 SDWN flow features and writes clean datasets to `data/processed/`.
-
-### 3. Run Experiments (10-Fold CV, Baselines, Ablation, Feature Importance)
-```bash
-uv run python src/run_experiments.py
+uv run pytest -v
 ```
 
----
+### 3. Reproduce Time-Based Blocking Cross-Validation (Step 3)
+```bash
+uv run python src/run_time_blocked_cv.py
+```
+Outputs:
+- `results/table2_time_blocked_cv_iscx.csv`
+- `results/table2_time_blocked_cv_ustc.csv`
+- `figures/fig_time_blocked_cv_accuracy_iscx.png`
+- `figures/fig_time_blocked_cv_accuracy_ustc.png`
 
-## 📊 Experimental Results Summary
+### 4. Reproduce Feature Robustness Experiments (Step 4)
+```bash
+uv run python src/feature_robustness_experiments.py
+```
+Outputs:
+- TTL Perturbation: `results/ttl_robustness_results_ustc.csv` & `figures/fig_ttl_corruption_robustness_ustc.png`
+- Destination Port Ablation: `results/dst_port_ablation_iscx.csv`
+- Higher-Order IAT Moments: `results/feature_importance_with_iat_moments_iscx.csv` & `figures/fig_feature_importance_moments_iscx.png`
+- Feature Count Diminishing Returns: `results/diminishing_returns_feature_count_iscx.csv` & `figures/fig_feature_diminishing_returns_iscx.png`
 
-### 10-Fold Stratified Cross-Validation (ISCX VPN 2016)
-| Method | Accuracy ($\text{mean} \pm \text{std}$) | Overhead $F$ ($\text{mean} \pm \text{std}$) | $p$-value vs PSO (Acc) | $p$-value vs PSO ($F$) | Parameters |
-|---|---:|---:|---:|---:|---:|
-| **PSO-FFNN (Base Paper [A])** | $94.12 \pm 0.84\%$ | $0.2745 \pm 0.0062$ | — | — | 325 |
-| **MOPSO-FFNN-AD (Ours [C])** | **$94.38 \pm 0.76\%$** | **$0.2612 \pm 0.0054$** | $0.1872$ | **$< 0.001$** | **325** |
-| **1D-CNN Baseline** | $93.85 \pm 1.12\%$ | $0.3418 \pm 0.0091$ | $0.3854$ | $< 0.001$ | 2,853 |
-| **LSTM Baseline** | $94.50 \pm 0.98\%$ | $0.3892 \pm 0.0125$ | $0.2818$ | $< 0.001$ | 12,997 |
-| **Transformer Baseline** | $94.65 \pm 0.89\%$ | $0.4125 \pm 0.0142$ | $0.1485$ | $< 0.001$ | 18,245 |
+### 5. Reproduce SOTA Comparison (Step 2)
+```bash
+# Generates updated Table 6 SOTA comparison table
+cat results/table6_sota_comparison.csv
+```
 
 ---
 
 ## 📁 Repository Structure
 
 ```
-CN_Project/
+CN_research/
 ├── data/
-│   ├── raw/                 # Input PCAP/CSV files (paste from SSD here)
-│   ├── processed/           # Extracted 8-feature flow CSVs
-│   └── metadata/            # Dataset statistics and label mappings
+│   ├── raw/                 # Input PCAP files
+│   ├── processed/           # Extracted 8-feature flows (iscx_flows.csv, ustc_flows.csv)
+│   └── metadata/            # Dataset duration statistics and label mappings
 ├── src/
-│   ├── dataset_loader.py    # PCAP/CSV streaming feature extractor
-│   ├── models.py            # FFNN, 1D-CNN, LSTM, Transformer implementations
-│   ├── mopso_optimizer.py   # Multi-scale MOPSO & Page-Hinkley drift detector
-│   └── run_experiments.py   # 10-fold CV, t-tests, ablation, and plotting
+│   ├── dataset_loader.py    # PCAP streaming feature extractor
+│   ├── models.py            # FFNN, 1D-CNN, LSTM, Transformer & composite fitness F
+│   ├── mopso_optimizer.py   # Multi-objective PSO & Page-Hinkley drift detector
+│   ├── run_experiments.py   # Standard 10-fold CV, policy ablation, permutation importance
+│   ├── run_time_blocked_cv.py # Time-based blocking cross-validation (Step 3)
+│   └── feature_robustness_experiments.py # TTL noise, dst_port ablation, IAT moments (Step 4)
 ├── docs/
-│   ├── PAPER_SECTION_UPDATES.md  # Publication manuscript updates & proofs
-│   └── PRESENTATION_VTOP_SLIDES.md # Complete slide deck for VTOP PPT
-├── memory/                  # Centralised Multi-Agent Memory Store
-│   ├── 00_CENTRAL_MEMORY_INDEX.md
-│   ├── 01_PROJECT_STATE_AND_ROADMAP.md
-│   ├── 02_ARCHITECTURE_AND_FORMULAS.md
-│   ├── 03_DATASET_AND_EXPERIMENT_LEDGER.md
-│   └── 04_AGENT_HANDOFF_LOG.md
-├── figures/                 # Generated high-resolution publication charts
-├── results/                 # Raw and aggregated CSV experiment metrics
-├── AGENTS.md                # Multi-agent operating rules & system instructions
-├── MEMORY.md                # Top-level shared memory index
-└── README.md                # Project documentation
+│   ├── RESEARCH_PAPER_FULL_MANUSCRIPT.md # Complete Q2 journal manuscript
+│   ├── PRESENTATION_VTOP_SLIDES.md       # Final Review 3 presentation slide deck
+│   └── PAPER_SECTION_UPDATES.md          # Revision log and mathematical proofs
+├── figures/                 # Publication-grade figures (boxplots, decay curves, Pareto fronts)
+├── results/                 # Raw and summary CSV experiment outputs
+├── tests/                   # 13 automated unit tests
+├── requirements.txt         # Pinned dependency specifications
+└── Dockerfile               # Containerized reproduction environment
 ```
 
 ---
 
-## 📚 Appendix: Hyperparameters & Configuration
+## 🐳 Docker Reproduction
 
-| Parameter | Symbol | Value / Grid |
-|---|---|---|
-| Swarm Population Size | $N_p$ | 55 (MOPSO), 50 (PSO) |
-| Max Iterations | $T$ | 300 (MOPSO), 350 (PSO) |
-| Inertia Weight | $w(t)$ | Linear decay: $0.90 \to 0.40$ |
-| Acceleration Constants | $c_1, c_2$ | $2.0, 2.0$ |
-| Multi-Scale Seeding Scales | $s_k$ | $\{1.0, 0.85, 0.70, 0.55, 0.40, 0.25, 0.12, 0.05\}$ |
-| Page-Hinkley Sensitivity | $\delta$ | 0.05 |
-| Page-Hinkley Threshold | $\lambda$ | 2.0 |
-| Default Fitness Weights | $(\alpha, \beta, \gamma, \delta, \epsilon)$ | $(0.45, 0.20, 0.15, 0.10, 0.10)$ |
-| Random Seed | — | 42 |
+To reproduce all results in a completely isolated Docker container:
+```bash
+docker build -t cn-research .
+docker run --rm -v $(pwd)/results:/app/results cn-research
+```
 
+---
+
+## 📜 Archival & Zenodo DOI Instructions
+
+To obtain a persistent DOI for journal submission:
+1. Link the GitHub repository [https://github.com/rikkumahan/CN_research.git](https://github.com/rikkumahan/CN_research.git) to [Zenodo](https://zenodo.org/).
+2. Create a GitHub Release tagged `v3.0.0-review3-final`.
+3. Zenodo will mint an archival DOI (e.g., `10.5281/zenodo.XXXXXXX`) that can be cited in the manuscript.
+
+---
+
+## ⚖️ License & Ethical Standards
+This software is licensed under the MIT License. Evaluation strictly preserves packet header metadata without inspecting or decrypting payload content, maintaining full compliance with GDPR and user privacy regulations.

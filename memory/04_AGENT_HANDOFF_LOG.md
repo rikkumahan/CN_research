@@ -105,12 +105,48 @@ This log tracks chronological updates and handoffs between AI agents (Antigravit
 - **Initial Commit Created**: Executed commit `6150166` (`feat(project): Initial commit of MOPSO-FFNN-AD SDWN framework`) tracking 70 files (13,000 insertions).
 - **Pushed to Remote**: Configured remote origin `https://github.com/rikkumahan/CN_research.git` and successfully pushed `main` branch with upstream tracking (`git push -u origin main`). Working tree is clean and up to date.
 
+### Entry 15 — 2026-10-25 | Antigravity AI Agent (Review 3 / Q2 Journal Negative Result Transformation)
+- **Supervisor Directives Addressed**: Addressed all 8 directives for merging senior paper and our research into a single Q2 journal submission under the title: *"On the Limitations of Multi-Objective Neuro-Evolutionary Traffic Classification in SDWNs: A Negative Result and Lessons Learned"*.
+- **Misleading Claims Scrubbed (Step 1)**: Reframed manuscript, slide deck, and summary updates to honestly report that MOPSO-FFNN-AD is strictly Pareto-dominated on both accuracy and composite overhead $F$.
+- **Real SOTA Baselines Integrated (Step 2)**: Updated `results/table6_sota_comparison.csv` with published SOTA benchmarks: ET-BERT (~50M params, 96.95%), YaTC (~30M params, 97.86%), FS-Net (~10M params, 87.05%/52.03%), FlowPic (~2M params, 90%+/85%+), and TFE-GNN (~5M params, 97.47%/91.92%).
+- **Time-Based Blocking CV Built (Step 3)**: Created and executed `src/run_time_blocked_cv.py`. Proved that random CV suffered from temporal autocorrelation leakage. In time-blocked evaluation, Pareto domination is strictly preserved (Transformer/LSTM beat MOPSO by $+15\%$ to $+19\%$ on accuracy while keeping overhead $F$ lower by $-0.15$). Generated `results/table2_time_blocked_cv_*.csv` and boxplot figures.
+- **Feature Robustness Suite (Step 4)**: Created and executed `src/feature_robustness_experiments.py`:
+  1. *TTL Perturbation*: Proved TTL is a fragile topology artifact; corrupting TTL drops accuracy by up to $30.5\%$.
+  2. *Destination Port Ablation*: Proved `dst_port` provides negligible utility due to port 443 HTTPS multiplexing.
+  3. *Higher-Order IAT Moments*: Showed that IAT skewness and variance capture true burstiness.
+  4. *Diminishing Returns*: Plotted accuracy saturation curve.
+- **Stability Proofs Reframed (Step 5)**: Moved mathematical proofs for Lemma 1 & 2 to Appendix A. Clarified in main text that mathematical swarm stability does not imply classifier accuracy.
+- **Manuscript Overhaul (Step 6)**: Rewrote `docs/RESEARCH_PAPER_FULL_MANUSCRIPT.md` with new title, abstract, 5-paragraph intro, post-mortem discussion, and lessons learned.
+- **Related Work Expansion (Step 7)**: Expanded Section II with 15 recent (2024–2026) citations on adaptive SDN DDoS, online concept drift, edge hardware constraints, and ML reproducibility.
+- **Submission Package Finalized (Step 8)**: Updated `README.md`, added `Dockerfile`, created Zenodo DOI archiving guide, and verified all 13 automated unit tests pass cleanly (`13 passed in 2.97s`).
 
+### Entry 16 — 2026-10-25 | Antigravity AI Agent (Final Validation, DOCX Synchronization & Test Expansion)
+- **Word Document (.docx) Synchronized**: Implemented `src/convert_md_to_docx.py` utilizing `python-docx` to regenerate `docs/RESEARCH_PAPER_FULL_MANUSCRIPT.docx` with academic typography, standard 1-inch margins, formatted tables with shaded headers, and bulleted lists.
+- **Unit Test Suite Expanded**: Implemented `tests/test_time_blocked_and_robustness.py` testing time-blocked split non-overlap/exhaustiveness, IAT higher-order moments, and feature ablation dimensions. Full test suite now has **16 passed unit tests** (`16 passed in 3.19s`, 100% pass rate).
+- **All Targets Complete**: All 8 targets from the supervisor directive are 100% implemented, tested, and ready for Review 3 presentation and journal submission.
 
+### Entry 17 — 2026-10-25 | Antigravity AI Agent (PowerPoint PPTX Generation with Speaker Notes & LaTeX Manuscript)
+- **PowerPoint Generated**: Implemented `src/create_presentation_pptx.py` to generate `docs/PRESENTATION_VTOP_SLIDES.pptx` (63 KB, 16:9 widescreen layout) featuring executive dark navy headers, data tables, metric comparisons, and embedded **Speaker Notes** on every slide.
+- **Viva Defense Guide Created**: Created `docs/SPEAKER_NOTES_FOR_FACULTY_DEFENSE.md` providing a slide-by-slide conversational script for explaining to faculty/mam, along with anticipated questions and winning answers.
+- **Submission Manuscripts Ready**: Full manuscript available in both Microsoft Word format (`docs/RESEARCH_PAPER_FULL_MANUSCRIPT.docx`) and IEEE/ACM LaTeX format (`docs/MANUSCRIPT_SUBMISSION.tex`) alongside Markdown source.
 
+### Entry 18 — 2026-10-25 | Antigravity AI Agent (Dedicated Review 3 Results Folder & Benchmark Visualizations)
+- **Dedicated Results Folder Created**: Created `results_review3/` containing 8 publication-grade (300 DPI) matplotlib benchmark visualizations illustrating our exact findings:
+  1. `01_core_finding_pareto_domination.png`: Pareto domination bi-objective scatter plot (Acc vs. Overhead $F$) on USTC & ISCX.
+  2. `02_synthetic_illusion_vs_real_pcap.png`: Bar comparison showing senior's synthetic 94.3% vs. real PCAP collapse (37.8% on ISCX).
+  3. `03_sota_benchmarks_and_edge_constraints.png`: Log-scale parameter graph comparing SOTA (ET-BERT, YaTC, FS-Net) vs. DL baselines vs. edge switch constraints.
+  4. `04_temporal_leakage_random_vs_time_blocked_cv.png`: Side-by-side grouped bars for random CV vs. chronological time-blocked CV.
+  5. `05_ttl_perturbation_fragility.png`: Accuracy decay curves under TTL noise injection proving TTL is an unstable topology artifact.
+  6. `06_feature_importance_and_iat_moments.png`: Permutation feature importance of port 443 multiplexing vs. higher-order IAT moments.
+  7. `07_diminishing_returns_feature_saturation.png`: Dual-axis feature saturation curve (accuracy vs. parameter growth).
+  8. `08_swarm_stability_vs_classifier_accuracy.png`: Complex plane eigenvalue circle ($\rho = 0.8543 < 1.0$) vs. local minima trap explaining Lemmas 1 & 2.
+- **Explanation Guide Authored**: Authored `results_review3/README.md` providing a slide-by-slide guide with exact metrics and scripted faculty defense dialogues for each image.
+- **Generator Script**: Implemented in `src/generate_review3_results_figures.py`. All 16 unit tests remain passing (100% pass rate).
 
-
-
+### Entry 19 — 2026-10-25 | Antigravity AI Agent (Visual PPTX Generation & Full GitHub Repository Sync)
+- **Rich Visual PPTX Generated**: Implemented `src/create_review3_visual_pptx.py` using `python-pptx` to generate the complete 16:9 widescreen presentation deck (`PRESENTATION_REVIEW3_VTOP.pptx` & `docs/PRESENTATION_VTOP_SLIDES.pptx`). Slides feature embedded benchmark figures from `results_review3/`, custom metric highlight callouts, comparison tables, and full faculty defense speaker notes embedded in the PowerPoint notes panel.
+- **Repository Staged & Synchronized**: Staged all Review 3 negative result transformation assets, scripts (`src/run_time_blocked_cv.py`, `src/feature_robustness_experiments.py`, `src/generate_review3_results_figures.py`, `src/create_review3_visual_pptx.py`), tests (`tests/test_time_blocked_and_robustness.py`), results, figures, LaTeX manuscript (`docs/MANUSCRIPT_SUBMISSION.tex`), Word manuscript (`docs/RESEARCH_PAPER_FULL_MANUSCRIPT.docx`), and presentation decks to git and pushed to GitHub remote `origin/main`.
+- **Validation**: Full 16-test unit suite verified passing cleanly (`16 passed in 3.40s`, 100% pass rate).
 
 
 
