@@ -148,5 +148,13 @@ This log tracks chronological updates and handoffs between AI agents (Antigravit
 - **Repository Staged & Synchronized**: Staged all Review 3 negative result transformation assets, scripts (`src/run_time_blocked_cv.py`, `src/feature_robustness_experiments.py`, `src/generate_review3_results_figures.py`, `src/create_review3_visual_pptx.py`), tests (`tests/test_time_blocked_and_robustness.py`), results, figures, LaTeX manuscript (`docs/MANUSCRIPT_SUBMISSION.tex`), Word manuscript (`docs/RESEARCH_PAPER_FULL_MANUSCRIPT.docx`), and presentation decks to git and pushed to GitHub remote `origin/main`.
 - **Validation**: Full 16-test unit suite verified passing cleanly (`16 passed in 3.40s`, 100% pass rate).
 
+### Entry 20 — 2026-10-26 | Antigravity AI Agent (Comprehensive Manuscript with All Results & Embedded Figures)
+- **All Figures Embedded in Markdown**: Updated `docs/RESEARCH_PAPER_FULL_MANUSCRIPT.md` to embed all 9 high-resolution publication figures (Figure 1: SDWN pipeline; Figure 2: Pareto domination bi-objective plot; Figure 3: synthetic data illusion vs PCAP collapse; Figure 4: SOTA scaling vs TCAM constraints; Figure 5: random vs time-blocked CV; Figure 6: TTL noise sensitivity; Figure 7: Port 443 multiplexing vs higher-order IAT moments; Figure 8: diminishing returns saturation; Figure 9: swarm stability unit circle vs local minima trap).
+- **All 10 Empirical Tables Integrated**: Added complete benchmark data tables (Tables 1-10 covering 10-fold CV, time-blocked CV, SOTA literature comparison, TTL perturbation, policy weight ablation, IAT moments, port ablation, diminishing returns, and hyperparameters).
+- **Docx Generator Enhanced**: Upgraded `src/convert_md_to_docx.py` with image embedding, centered figure captions, IEEE deep navy table styling with white bold headers, alternating zebra shading, and callout boxes.
+- **Publication Word Document Regenerated**: Rebuilt `docs/RESEARCH_PAPER_FULL_MANUSCRIPT.docx` (2.71 MB) with all 9 figures cleanly embedded.
+- **LaTeX Synchronized**: Updated `docs/MANUSCRIPT_SUBMISSION.tex` with matching figure environments and full tables.
+
+
 
 

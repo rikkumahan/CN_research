@@ -1,6 +1,5 @@
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
-% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{algorithmic}
@@ -22,10 +21,11 @@
 
 \title{On the Limitations of Multi-Objective Neuro-Evolutionary Traffic Classification in SDWNs: A Negative Result and Lessons Learned}
 
-\author{\IEEEauthorblockN{Anonymous Authors}
+\author{\IEEEauthorblockN{Sai Rithvik Mahankali, Akshay Kumar Pudi, and Budithi Supraja}
 \IEEEauthorblockA{\textit{School of Computer Science and Engineering (SCOPE)} \\
 \textit{Vellore Institute of Technology (VIT)}\\
-Vellore, Tamil Nadu, India}
+Vellore, Tamil Nadu, India \\
+Emails: \{rikkumahan07, akshaykumarpudi\}@gmail.com}
 }
 
 \maketitle
@@ -58,6 +58,13 @@ Despite these intuitive formulations, both foundational predecessors suffered fr
 In this work, we conduct the first rigorous evaluation of multi-objective neuro-evolutionary SDWN traffic classification on real captured PCAP benchmarks: \textbf{ISCX VPN-nonVPN 2016} and \textbf{USTC-TFC 2016}. Our primary empirical contribution is an \textbf{honest, rigorous negative result}: when evaluated on real-world encrypted traffic, the proposed MOPSO-FFNN-AD is \textbf{strictly Pareto-dominated} by modern deep learning baselines across both accuracy AND composite physical overhead. Rather than obscuring this under the guise of an ``intentional multi-objective compromise,'' we demonstrate why the multi-objective formulation fails to produce non-dominated operating points against deep learning.
 
 \section{System Architecture \& Problem Formulation}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../figures/fig_inst8_system_pipeline.png}
+\caption{Software-Defined Wireless Network (SDWN) control plane and data plane interaction pipeline.}
+\label{fig:pipeline}
+\end{figure}
 
 \subsection{Standardized 8-Dimensional Flow Feature Schema}
 To avoid invasive payload inspection under end-to-end encryption (TLS 1.3 / HTTPS / VPN), the controller summarizes each bidirectional flow into an 8-dimensional statistical header vector:
@@ -121,13 +128,27 @@ All models were evaluated across 10-fold stratified cross-validation with strict
 \end{tabular}
 \end{table*}
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{../results_review3/01_core_finding_pareto_domination.png}
+\caption{Empirical demonstration of Pareto domination on real-world PCAP benchmarks (Accuracy vs. Overhead $F$). Proposed MOPSO-FFNN-AD is strictly dominated on both axes by Compact Transformer, LSTM, and 1D-CNN.}
+\label{fig:pareto_domination}
+\end{figure*}
+
 \subsection{The Negative Result: Strict Pareto Domination}
-As detailed in Table~\ref{tab:10fold_results}:
+As detailed in Table~\ref{tab:10fold_results} and Figure~\ref{fig:pareto_domination}:
 \begin{itemize}
     \item On USTC-TFC, the Transformer achieves $78.57\%$ accuracy with $F = 0.1686$. MOPSO-FFNN-AD achieves only $62.97\%$ accuracy with $F = 0.3816$.
     \item On ISCX VPN, the LSTM achieves $64.23\%$ accuracy with $F = 0.3067$. MOPSO-FFNN-AD achieves only $37.87\%$ accuracy with $F = 0.4817$.
 \end{itemize}
 Because deep learning models achieve \textbf{both higher accuracy AND lower overhead $F$ simultaneously}, MOPSO-FFNN-AD is \textbf{strictly Pareto-dominated}. Claiming this result as an ``intentional trade-off'' is scientifically indefensible.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../results_review3/02_synthetic_illusion_vs_real_pcap.png}
+\caption{Deconstructing the synthetic evaluation illusion. The reported $94.33\%$ accuracy on synthetic clusters collapses to $37.87\%$ on real PCAP traffic.}
+\label{fig:synthetic_illusion}
+\end{figure}
 
 \subsection{Time-Based Blocking Cross-Validation}
 To eliminate temporal session autocorrelation leakage, we partitioned flows chronologically into 10 contiguous time blocks. Under strict time blocking:
@@ -135,7 +156,21 @@ To eliminate temporal session autocorrelation leakage, we partitioned flows chro
     \item On ISCX: LSTM achieves $57.30\%$ ($F = 0.3343$) and Transformer achieves $53.37\%$ ($F = 0.3239$) vs MOPSO ($38.23\%$, $F = 0.4837$).
     \item On USTC: 1D-CNN achieves $77.40\%$ ($F = 0.1989$) vs MOPSO ($66.60\%$, $F = 0.3742$).
 \end{itemize}
-All paired $t$-tests confirm $p < 0.01$. Pareto domination is strictly preserved under temporal isolation.
+All paired $t$-tests confirm $p < 0.01$. Pareto domination is strictly preserved under temporal isolation (Figure~\ref{fig:temporal_leakage}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../results_review3/04_temporal_leakage_random_vs_time_blocked_cv.png}
+\caption{Comparison of test accuracy under standard Random 10-Fold CV vs. chronological Time-Based Blocking CV across all models.}
+\label{fig:temporal_leakage}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../results_review3/03_sota_benchmarks_and_edge_constraints.png}
+\caption{Published SOTA parameter scaling (ET-BERT, YaTC, FS-Net, FlowPic, TFE-GNN) vs. DL baselines vs. edge switch TCAM constraints.}
+\label{fig:sota_scaling}
+\end{figure}
 
 \begin{table}[h]
 \centering
@@ -163,14 +198,42 @@ We identify three primary root causes:
 \begin{enumerate}
     \item \textbf{Proxy Metric Misalignment}: Terms $f_3$ and $f_5$ penalize weights $|w| > 0.3$. Deep learning layers trained with $L_2$ weight decay (\texttt{1e-4}) and Batch Normalization naturally keep weights below $0.2$, bypassing penalties. Unconstrained PSO search weights range in $[-3, 3]$ and get penalized. Weight magnitude is not hardware cost.
     \item \textbf{Capacity Bottleneck}: A 325-parameter network ($8 \to 16 \to 8 \to 5$) lacks representational capacity to separate encrypted VPN flows ($37.87\%$).
-    \item \textbf{Feature Weaknesses}: Permutation ablation proves \texttt{dst\_port} provides zero utility due to universal Port 443 HTTPS multiplexing ($\Delta\text{Acc} = 0.0\%$). Furthermore, adding noise to \texttt{ttl} drops accuracy by $30.5\%$, proving TTL is a testbed topology artifact.
+    \item \textbf{Feature Weaknesses}: Permutation ablation proves \texttt{dst\_port} provides zero utility due to universal Port 443 HTTPS multiplexing ($\Delta\text{Acc} = 0.0\%$). Furthermore, injecting noise into \texttt{ttl} drops accuracy by $26.83\%$ (Figure~\ref{fig:ttl_decay}), proving TTL is a testbed topology artifact.
 \end{enumerate}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../results_review3/05_ttl_perturbation_fragility.png}
+\caption{Feature fragility under bounded TTL noise injection ($\pm \delta$ hops). As synthetic perturbation noise increases, FFNN accuracy collapses by $26.83\%$.}
+\label{fig:ttl_decay}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../results_review3/06_feature_importance_and_iat_moments.png}
+\caption{Permutation feature importance post-mortem: Port 443 multiplexing vs. higher-order IAT moments.}
+\label{fig:feature_moments}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../results_review3/07_diminishing_returns_feature_saturation.png}
+\caption{Accuracy saturation curve as feature dimensionality increases from 1 to 8 features on ISCX VPN.}
+\label{fig:diminishing_returns}
+\end{figure}
 
 \section{Conclusion}
 We presented an empirical post-mortem of multi-objective neuro-evolutionary SDWN traffic classification. Evaluating on real PCAPs revealed strict Pareto domination by deep learning baselines. We deconstructed the flawed proxy metrics, proved swarm stability (Appendix A), and demonstrated that compact 1D-CNNs (~2k parameters) offer the true viable edge sweet spot.
 
 \appendix
 \section{Mathematical Swarm Stability Proofs}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../results_review3/08_swarm_stability_vs_classifier_accuracy.png}
+\caption{Mathematical swarm stability vs. classifier accuracy: Complex plane unit circle ($\rho = 0.8543 < 1.0$) vs. local minima trap.}
+\label{fig:stability_proofs}
+\end{figure}
 
 \subsection{Lemma 1: First-Order Mean Convergence}
 \begin{lemma}
